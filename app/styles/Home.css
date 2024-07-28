@@ -10,3 +10,32 @@
     padding: 20px;
     border-radius: 10px;
 }
+ /* Popup modal overlay */
+ .popup-overlay {
+    background: rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Popup modal content */
+  .modal {
+    background: white;
+    color: black;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 500px;
+    height: 500px;
+    width: 90%;
+    position: relative;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+  }
+  
+  .header {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  
+  .content {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    overflow-y: auto;
+  }

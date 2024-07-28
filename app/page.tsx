@@ -1,8 +1,10 @@
 "use client";
 import "./styles/Home.css";
 import Image from 'next/image';
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { getWeather,getWeatherByCity } from "./services/getWeather";
+import Popup from 'reactjs-popup';
+import EventCard from "./components/EventCard";
 
 export default function Home() {
   const [report, setReport] = useState<WeatherReport>({
@@ -12,13 +14,14 @@ export default function Home() {
     location: "",
     icon: ""
   });
+  const [event, setEvent] = useState<EventInfo[]>([]);
   const [location, setLocation] = useState<string>("");
  
   function getMyCityReport(){
       // main code
       navigator.geolocation.getCurrentPosition((position) => {
       const { latitude, longitude } = position.coords;
-      getWeather(latitude, longitude).then((data) => {
+       getWeather(latitude, longitude).then((data) => {
         const report: WeatherReport = {
           tempMax: data.days[0].tempmax,
           tempMin: data.days[0].tempmin,
@@ -31,8 +34,9 @@ export default function Home() {
       });
       //console.log("button clicked");
   }
-  function getCityReport(){
-    if(location){
+  function getCityReport(e:FormEvent){
+    e.preventDefault();
+    if(location!==""&&location!==null){
       getWeatherByCity(location).then((data) => {
         const report: WeatherReport = {
           tempMax: data.days[0].tempmax,
@@ -45,6 +49,27 @@ export default function Home() {
       })
     }
   }
+  async function getEvents(){
+    // get events
+    const curLocation=report.location.split("/")[1];
+    // if(curLocation){
+    //   getEventsByCity(curLocation).then((data:EventInfo[]) => {
+    //     console.log(data);
+    //     setEvent(data);
+    //   })
+    // }
+    const res = await fetch(`/api/events/${curLocation}`,{
+      method:"POST",
+      // headers:{
+      //   'Content-Type':'application/json'
+      // },
+      body:JSON.stringify({
+        city:curLocation})
+    })
+    const data = await res.json();
+    console.log(data);
+    setEvent(data);
+  }
   return (
     <div className="bg_img flex flex-col items-center justify-center gap-5">
       <div className=" flex flex-col justify-center items-center gap-4 bg_transparent">
@@ -55,17 +80,29 @@ export default function Home() {
             Get My City Report
           </button>
           <div>Or</div>
-          <form className="flex flex-col items-center justify-center gap-4">
+          <form className="flex flex-col items-center justify-center gap-4" onSubmit={e=>getCityReport(e)}>
             <input required type="text" value={location} onChange={(e)=>setLocation(e.target.value)} placeholder="Enter City Name" className="border-2 border-black rounded-lg p-2 text-center text-black" />
-            <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={getCityReport}>
+            <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
               Get City Report
               </button>
           </form>
         </div>
-        { report &&
-          <div className="flex flex-col items-start justify-center">
+        { report && report.location &&
+          <div className="flex flex-col items-center justify-center">
             <div className="flex flex-col items-center justify-center">
              <h2 id="location">{report.location}</h2>
+             <Popup onOpen={getEvents} trigger={<button className="bg-slate-600 text-white font-bold test-xl p-2 rounded-lg">Click to know about upcoming events?</button>} position="right center" modal nested>
+              <div className="modal">
+              <div className="header">Events</div>
+              <div className="content">
+                <div className="flex flex-col gap-4 items-center justify-center">
+                  {event && event.length>0 && event.map((item:EventInfo,index)=>
+                    <EventCard key={index} title={item.title} description={item.description} start_date={item.date.start_date}  />
+                  )}
+                </div>
+              </div>
+            </div>
+            </Popup>
              {report.icon && <Image src={"/icons/"+report.icon+".svg"} alt="weather icon" width={200} height={200} className="p-2" />}
             </div>
             <div className="flex flex-col gap-4 items-center justify-center text-lg text-white">
